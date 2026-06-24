@@ -4,6 +4,26 @@
  * TODO
  * WRITE YOUR CLASS FUNCTION IMPLEMENTATIONS HERE
  */
+void Display::init(){
+    tft.begin();
+    tft.setRotation(2);
+    tft.fillScreen(TFT_BLACK);
+}
+
+
+
+void Display::print_d(const char *str, int x, int y, uint8_t font_size){
+    
+    tft.setTextSize(font_size);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawString(str, x, y, font_);
+}
+
+void Display::set_font(uint8_t font){
+    font_ = font;
+}
+
+ 
 
 void Display::drawWiFiSymbol(int x, int y, uint16_t color)
 {
@@ -111,4 +131,15 @@ void Display::drawBatterySymbol(int x, int y, int battery, uint16_t color)
     int fill_y = y - fill_height / 2;
     tft.fillRect(fill_x, fill_y, fill_width, fill_height, TFT_GREEN);
     String percent = String(battery) + "%";
+}
+
+void Display::drawTime(struct tm *timeInfo){
+    char str[8];
+    strftime(str,sizeof(str),"%H:%M",timeInfo);
+    print_d(str, 65, 30, 4);
+}
+void Display::drawDate(struct tm *timeInfo){
+    char str[11];
+    strftime(str,sizeof(str),"%m/%d/%Y",timeInfo);
+    print_d(str, 65, 70, 2);
 }
