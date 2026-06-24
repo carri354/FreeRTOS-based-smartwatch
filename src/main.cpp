@@ -13,9 +13,10 @@ MyWifi wifi;
 struct tm timeInfo;
 touch_screen_t touch_screen;
 
-const char *id = "@umlguest";
-const char *user = "summeruser305@umlguest";
-const char *pass = 0; // password omitted for security reasons
+// credentials omitted for security reasons
+const char *id = "";
+const char *user = "";
+const char *pass = ""; 
 
 extern volatile bool power_button_flag;
 extern volatile bool touch_screen_flag;
