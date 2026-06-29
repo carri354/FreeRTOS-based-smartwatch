@@ -16,9 +16,10 @@ public:
     void drawFitnessSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawBatterySymbol(int x, int y, int battery, uint16_t color = TFT_WHITE);
 
+    void drawSettingsSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawTime(struct tm *timeInfo);
     void drawDate(struct tm *timeInfo);
-
+    void drawStepCount(uint32_t steps);
 
     Display() : font_(1), size_(239){};
     Display(uint8_t font) : font_(font) {};

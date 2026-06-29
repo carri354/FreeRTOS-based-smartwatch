@@ -6,12 +6,20 @@
 #include "touch.h"
 #include "accel.h"
 #include "dbg.h"
+#include "app_handler.h"
 
 Power power_unit;
 Display lcd;
 MyWifi wifi;
 struct tm timeInfo;
 touch_screen_t touch_screen;
+Accel accelerometer;
+
+
+int8_t app_idx = 0;
+app_handle_t *app_list[9];
+
+
 
 // credentials omitted for security reasons
 const char *id = "";
@@ -20,6 +28,7 @@ const char *pass = "";
 
 extern volatile bool power_button_flag;
 extern volatile bool touch_screen_flag;
+extern volatile bool accel_flag;
 
 void handle_interrupts(){
   if(power_button_flag){
@@ -40,6 +49,12 @@ void handle_interrupts(){
     Serial.println(touch_screen.p1.y);
 
   }
+
+  if(accel_flag){
+    accel_flag = false;
+    // lcd.drawStepCount(accelerometer.get_step_count());
+    accelerometer.reset_irq();
+  }
 }
 
 
@@ -48,6 +63,7 @@ void handle_interrupts(){
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  Wire.begin();
   
   // Power unit
   pinMode(AXP_INT_PIN, INPUT_PULLUP);
@@ -78,8 +94,32 @@ void setup() {
   attachInterrupt((digitalPinToInterrupt(FT6236U_INT_PIN)), FT6236U_Touch_Callback, FALLING);
   TS_Init();
 
+  // Accelerometer
+  pinMode(BMA_INT_PIN, INPUT_PULLDOWN);
+  attachInterrupt((digitalPinToInterrupt(BMA_INT_PIN)), BMA423_Callback, RISING);
+  accelerometer.init();
+  
+  // App list
+  app_list[0] = &h_stopwatch;
+  app_list[1] = &h_fitness;
+  app_list[2] = &h_settings;
+
+  app_list[3] = nullptr;
+  app_list[4] = nullptr;
+  app_list[5] = nullptr;
+  app_list[6] = nullptr;
+  app_list[7] = nullptr;
+  app_list[8] = nullptr;
+
   
   wifi.disconnect();
+  
+
+  for(int i = 0; i < 9; i++){
+    if(app_list[i]){
+      draw_app_icon(app_list[i], i);
+    }
+  }
   
   Serial.println("Setup Complete");
 
@@ -93,6 +133,7 @@ void loop() {
   RTC_get_time(&timeInfo);
   lcd.drawDate(&timeInfo);
   lcd.drawTime(&timeInfo);
+  
   
   
 }

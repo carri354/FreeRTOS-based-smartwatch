@@ -40,8 +40,8 @@ void Power::toggle_power(){
 
 void Power::power_on(){
     int ret;
-
-    Wire.begin(i2c_sda, i2c_scl);
+    
+    
 
     ret = axp.begin(Wire);
 

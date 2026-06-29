@@ -15,8 +15,10 @@ void Display::init(){
 void Display::print_d(const char *str, int x, int y, uint8_t font_size){
     
     tft.setTextSize(font_size);
+    tft.setTextWrap(true, true);
     tft.setTextColor(TFT_GREEN, TFT_BLACK);
     tft.drawString(str, x, y, font_);
+    
 }
 
 void Display::set_font(uint8_t font){
@@ -24,6 +26,16 @@ void Display::set_font(uint8_t font){
 }
 
  
+void Display::drawSettingsSymbol(int x, int y, uint16_t color)
+{
+    int r1 = 8;
+    int r2 = 16;
+    int r3 = 24;
+    tft.fillCircle(x, y, 2, color);
+    tft.drawArc(x, y, r1, r1 - 2, 135, 225, color, TFT_BLACK);
+    tft.drawArc(x, y, r2, r2 - 2, 135, 225, color, TFT_BLACK);
+    tft.drawArc(x, y, r3, r3 - 2, 135, 225, color, TFT_BLACK);
+}
 
 void Display::drawWiFiSymbol(int x, int y, uint16_t color)
 {
@@ -136,10 +148,17 @@ void Display::drawBatterySymbol(int x, int y, int battery, uint16_t color)
 void Display::drawTime(struct tm *timeInfo){
     char str[8];
     strftime(str,sizeof(str),"%H:%M",timeInfo);
-    print_d(str, 65, 30, 4);
+    print_d(str, 65, 160, 4);
 }
 void Display::drawDate(struct tm *timeInfo){
     char str[11];
     strftime(str,sizeof(str),"%m/%d/%Y",timeInfo);
-    print_d(str, 65, 70, 2);
+    print_d(str, 65, 200, 2);
+}
+
+void Display::drawStepCount(uint32_t steps){
+    print_d("Step Count:", 45, 120);
+    char buf[12];
+    snprintf(buf, sizeof(buf), "%d", steps);
+    print_d(buf, 175, 120);
 }

@@ -69,7 +69,7 @@ status_t MyWifi::connect(){
         unsigned long t2 = millis();
         if(t2 - t1 >= WIFI_TIMEOUT_MS){
             handle_error("WiFi connection timeout");
-            return STATUS_OK;
+            return STATUS_ERROR;
         }
     }
     

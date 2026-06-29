@@ -3,7 +3,7 @@
 void handle_error(const char *error_msg){
     Serial.print("ERROR: ");
     Serial.println(error_msg);
-    lcd.print_d(error_msg, 20, 20);
+    lcd.print_d(error_msg, 20, 200);
 }
 
 void print_date_time(struct tm *timeInfo, dbg_t mode) {
