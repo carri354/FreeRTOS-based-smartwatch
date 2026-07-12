@@ -1,10 +1,6 @@
 #include "app_handler.h"
 
-constexpr int HOME_HORZ_PAD = 60;
-constexpr int HOME_HORZ_SPACE = 60;
 
-constexpr int HOME_VERT_PAD = 75;
-constexpr int HOME_VERT_SPACE = 60;
 
 
 void draw_app_icon(app_handle_t *app, int8_t idx){
@@ -16,6 +12,26 @@ void draw_app_icon(app_handle_t *app, int8_t idx){
     (lcd.*(app->draw_icon))(HOME_HORZ_PAD + HOME_HORZ_SPACE*col, HOME_VERT_PAD + HOME_VERT_SPACE*row, TFT_GREEN);
 }
 
+void launch_app(app_handle_t *app){
+    (*(app->launch))();
+}
+
+/// @brief Get app index from touch coordinates (typically 0-8)
+/// @param x x-coord of touch
+/// @param y y-coord of touch
+/// @return App index, returns -1 if index is invalid
+int8_t get_idx_from_touch(uint16_t x, uint16_t y){
+    if(x < HOME_HORZ_PAD - HOME_HORZ_SPACE/2 || y < HOME_VERT_PAD - HOME_VERT_SPACE/2) return -1;
+    if(x > HOME_HORZ_PAD + (HOME_HORZ_SPACE*2))return -1;
+    if(y > HOME_VERT_PAD + (HOME_VERT_SPACE*2))return-1;
+
+
+
+   
+
+    return ((y - HOME_VERT_PAD + (HOME_VERT_SPACE/2)) / HOME_VERT_SPACE )*3 
+            + ((x - HOME_HORZ_PAD + (HOME_HORZ_SPACE/2)) / HOME_HORZ_SPACE );
+}
 
 
 
@@ -25,7 +41,12 @@ app_handle_t h_stopwatch{
     .launch = &stopwatch_launch
 };
 void stopwatch_launch(){
+    
     Serial.println("Stopwatch launched!");
+    lcd.drawStopWatchStart();
+
+    
+    
 }
 
 app_handle_t h_settings{

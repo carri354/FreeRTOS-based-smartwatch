@@ -16,7 +16,8 @@ touch_screen_t touch_screen;
 Accel accelerometer;
 
 
-int8_t app_idx = 0;
+int8_t app_idx = -1;
+int8_t last_app_idx = -1;
 app_handle_t *app_list[9];
 
 
@@ -30,6 +31,60 @@ extern volatile bool power_button_flag;
 extern volatile bool touch_screen_flag;
 extern volatile bool accel_flag;
 
+extern SemaphoreHandle_t power_sem;
+extern SemaphoreHandle_t touch_sem;
+extern SemaphoreHandle_t accel_sem;
+
+// FreeRTOS tasks
+void manage_power(void *param){
+  while(1){
+    if(power_button_flag){
+      power_button_flag = false;
+      power_unit.reset_irq();
+      power_unit.toggle_power();
+    
+    }
+  }
+  
+}
+
+void detect_touch(void *param){
+  while(1){
+    if(touch_screen_flag){
+      touch_screen_flag = false;
+      TS_get_points(&touch_screen);
+
+      if(last_app_idx == -1){
+        app_idx = get_idx_from_touch(touch_screen.p1.x, touch_screen.p1.y);
+      }
+
+      Serial.print("Touch coordinates: X= ");
+      Serial.print(touch_screen.p1.x);
+
+      Serial.print("\tY= ");
+      Serial.print(touch_screen.p1.y);
+
+      Serial.print("\tIndex: ");
+      Serial.println(app_idx);
+
+    }
+  }
+  
+}
+
+void handle_accelerometer(void *param){
+  while(1){
+    if(accel_flag){
+      accel_flag = false;
+      // lcd.drawStepCount(accelerometer.get_step_count());
+      accelerometer.reset_irq();
+    }
+  }
+  
+}
+
+
+
 void handle_interrupts(){
   if(power_button_flag){
     power_button_flag = false;
@@ -41,12 +96,18 @@ void handle_interrupts(){
     touch_screen_flag = false;
     TS_get_points(&touch_screen);
 
-    
+    if(last_app_idx == -1){
+      app_idx = get_idx_from_touch(touch_screen.p1.x, touch_screen.p1.y);
+    }
+
     Serial.print("Touch coordinates: X= ");
     Serial.print(touch_screen.p1.x);
 
     Serial.print("\tY= ");
-    Serial.println(touch_screen.p1.y);
+    Serial.print(touch_screen.p1.y);
+
+    Serial.print("\tIndex: ");
+    Serial.println(app_idx);
 
   }
 
@@ -57,6 +118,30 @@ void handle_interrupts(){
   }
 }
 
+
+void home_page(void *param){
+  while(1){
+    // put your main code here, to run repeatedly:
+    last_app_idx = app_idx;
+
+    // Reject null app touches
+    if(app_idx != -1 && app_list[app_idx] == nullptr){
+      app_idx = -1;
+      last_app_idx = -1;
+    }
+
+    // Home page loop
+    if(last_app_idx == -1){
+      RTC_get_time(&timeInfo);
+      lcd.drawDate(&timeInfo);
+      lcd.drawTime(&timeInfo);
+      
+      if(app_idx != last_app_idx && app_list[app_idx] != nullptr){
+        launch_app(app_list[app_idx]);
+      }
+    }
+  }
+}
 
 
 
@@ -99,6 +184,7 @@ void setup() {
   attachInterrupt((digitalPinToInterrupt(BMA_INT_PIN)), BMA423_Callback, RISING);
   accelerometer.init();
   
+  
   // App list
   app_list[0] = &h_stopwatch;
   app_list[1] = &h_fitness;
@@ -111,6 +197,8 @@ void setup() {
   app_list[7] = nullptr;
   app_list[8] = nullptr;
 
+
+
   
   wifi.disconnect();
   
@@ -120,6 +208,44 @@ void setup() {
       draw_app_icon(app_list[i], i);
     }
   }
+
+//   xTaskCreate(
+//     home_page,
+//     "Home Page Routine",
+//     2048,
+//     NULL,
+//     2,
+//     NULL
+//   );
+
+//   xTaskCreate(
+//     manage_power,
+//     "Power Button Routine",
+//     1024,
+//     NULL,
+//     2,
+//     NULL
+//   );
+
+// xTaskCreate(
+//     detect_touch,
+//     "Touch Screen Routine",
+//     1536,
+//     NULL,
+//     2,
+//     NULL
+//   );
+
+// xTaskCreate(
+//     handle_accelerometer,
+//     "Accelerometer Routine",
+//     1024,
+//     NULL,
+//     2,
+//     NULL
+//   );
+
+//   vTaskDelete(NULL);
   
   Serial.println("Setup Complete");
 
@@ -127,13 +253,23 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
+  last_app_idx = app_idx;
   handle_interrupts();
+  // Reject null app touches
+  if(app_idx != -1 && app_list[app_idx] == nullptr){
+    app_idx = -1;
+    last_app_idx = -1;
+  }
 
-  RTC_get_time(&timeInfo);
-  lcd.drawDate(&timeInfo);
-  lcd.drawTime(&timeInfo);
-  
-  
+  // Home page loop
+  if(last_app_idx == -1){
+    RTC_get_time(&timeInfo);
+    lcd.drawDate(&timeInfo);
+    lcd.drawTime(&timeInfo);
+    
+    if(app_idx != last_app_idx && app_list[app_idx] != nullptr){
+      launch_app(app_list[app_idx]);
+    }
+  }
   
 }

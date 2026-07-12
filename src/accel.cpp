@@ -5,9 +5,13 @@
  * WRITE YOUR CLASS FUNCTION IMPLEMENTATIONS HERE
  */
 
-volatile bool accel_flag = false;
+
+SemaphoreHandle_t accel_sem;
+
 void IRAM_ATTR BMA423_Callback(){
-   accel_flag = true;
+   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(accel_sem, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
  Accel::Accel(){

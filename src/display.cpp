@@ -162,3 +162,21 @@ void Display::drawStepCount(uint32_t steps){
     snprintf(buf, sizeof(buf), "%d", steps);
     print_d(buf, 175, 120);
 }
+
+
+void Display::drawRectangle(int x, int y, int width, int height, uint32_t color){
+    tft.drawRect(x,y,width,height,color);
+}
+
+
+void Display::drawStopWatchStart(){
+    tft.fillScreen(TFT_BLACK);
+    drawHomeSymbol(HOME_X, HOME_Y);
+    print_d("0:00:00", 40, 80, 4);
+
+    drawRectangle(50,120, 65, 20);
+    drawRectangle(140,120, 55, 20);
+
+    print_d("Start", 53, 123);
+    print_d("Stop", 143, 123);
+}

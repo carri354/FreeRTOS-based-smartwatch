@@ -3,7 +3,8 @@
 #include <TFT_eSPI.h>
 #include <time.h>
 
-
+constexpr uint8_t HOME_X = 190;
+constexpr uint8_t HOME_Y = 210;
 
 
 class Display
@@ -20,6 +21,12 @@ public:
     void drawTime(struct tm *timeInfo);
     void drawDate(struct tm *timeInfo);
     void drawStepCount(uint32_t steps);
+
+    // Basic Shapes
+    void drawRectangle(int x, int y, int width, int height, uint32_t color = TFT_WHITE);
+
+    // Stopwatch
+    void drawStopWatchStart();
 
     Display() : font_(1), size_(239){};
     Display(uint8_t font) : font_(font) {};
