@@ -85,6 +85,17 @@ void RTC_set_time(struct tm *timeInfo){
     RTC_write(PCF8563_CR1_ADDR, &reg, 1);
 }
 
+void tm_subtract(struct tm* t1, struct tm* t2, struct tm* result){
+    time_t time1 = mktime(t1);
+    time_t time2 = mktime(t2);
+
+    long diff_sec = (long)difftime(time2, time1);
+
+    result->tm_hour = diff_sec / 3600;
+    result->tm_min  = (diff_sec % 3600) / 60;
+    result->tm_sec  = diff_sec % 60;
+}
+
 /**
  * Write multiple bytes to the real-time clock (RTC)
  * 

@@ -111,10 +111,12 @@ static esp_err_t TS_read(uint8_t reg_addr, uint8_t *buf, size_t buf_len){
     return ret;
 }
 
-volatile bool touch_screen_flag = false;
+SemaphoreHandle_t touch_sem;
 
 void IRAM_ATTR FT6236U_Touch_Callback(){
-    touch_screen_flag = true;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(touch_sem, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void process_point(touch_point_t *point, uint8_t *data){

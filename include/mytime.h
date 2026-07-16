@@ -48,8 +48,8 @@ void RTC_init();
 void RTC_get_time(struct tm *timeInfo);
 void RTC_set_time(struct tm *timeInfo);
 
-
-
+// t2 - t1 => result
+void tm_subtract(struct tm* t1, struct tm* t2, struct tm* result);
 
 
 // Low-level register writes

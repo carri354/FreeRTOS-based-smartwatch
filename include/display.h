@@ -24,9 +24,12 @@ public:
 
     // Basic Shapes
     void drawRectangle(int x, int y, int width, int height, uint32_t color = TFT_WHITE);
+    void clear_screen();
 
-    // Stopwatch
+    // App Screens
     void drawStopWatchStart();
+    void drawFitnessStart();
+    void drawSettingsStart();
 
     Display() : font_(1), size_(239){};
     Display(uint8_t font) : font_(font) {};

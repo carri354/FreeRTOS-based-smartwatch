@@ -8,10 +8,12 @@
 // NON-CLASS
 
 
-volatile bool power_button_flag = false; // 0 = off, 1 = on
+SemaphoreHandle_t power_sem;
 
 void IRAM_ATTR AXP202_BTN_Callback(){
-    power_button_flag = true;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(power_sem, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 

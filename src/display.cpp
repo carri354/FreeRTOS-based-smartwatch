@@ -157,10 +157,9 @@ void Display::drawDate(struct tm *timeInfo){
 }
 
 void Display::drawStepCount(uint32_t steps){
-    print_d("Step Count:", 45, 120);
     char buf[12];
     snprintf(buf, sizeof(buf), "%d", steps);
-    print_d(buf, 175, 120);
+    print_d(buf, 110, 140, 3);
 }
 
 
@@ -172,11 +171,28 @@ void Display::drawRectangle(int x, int y, int width, int height, uint32_t color)
 void Display::drawStopWatchStart(){
     tft.fillScreen(TFT_BLACK);
     drawHomeSymbol(HOME_X, HOME_Y);
-    print_d("0:00:00", 40, 80, 4);
+    print_d("00:00:00", 20, 80, 4);
 
     drawRectangle(50,120, 65, 20);
     drawRectangle(140,120, 55, 20);
+    drawRectangle(100, 150, 65, 20);
 
     print_d("Start", 53, 123);
     print_d("Stop", 143, 123);
+    print_d("Reset", 103, 153);
+}
+
+void Display::drawSettingsStart(){
+    tft.fillScreen(TFT_BLACK);
+    drawHomeSymbol(HOME_X, HOME_Y);
+}
+
+void Display::drawFitnessStart(){
+    tft.fillScreen(TFT_BLACK);
+    drawHomeSymbol(HOME_X, HOME_Y);
+    print_d("Step Count", 30, 100, 3);
+}
+
+void Display::clear_screen(){
+    tft.fillScreen(TFT_BLACK);
 }
