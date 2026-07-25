@@ -12,11 +12,11 @@ void Display::init(){
 
 
 
-void Display::print_d(const char *str, int x, int y, uint8_t font_size){
+void Display::print_d(const char *str, int x, int y, uint8_t font_size, uint16_t fg_color, uint16_t bg_color){
     
     tft.setTextSize(font_size);
     tft.setTextWrap(true, true);
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.setTextColor(fg_color, bg_color);
     tft.drawString(str, x, y, font_);
     
 }
@@ -28,24 +28,84 @@ void Display::set_font(uint8_t font){
  
 void Display::drawSettingsSymbol(int x, int y, uint16_t color)
 {
-    int r1 = 8;
-    int r2 = 16;
-    int r3 = 24;
-    tft.fillCircle(x, y, 2, color);
-    tft.drawArc(x, y, r1, r1 - 2, 135, 225, color, TFT_BLACK);
-    tft.drawArc(x, y, r2, r2 - 2, 135, 225, color, TFT_BLACK);
-    tft.drawArc(x, y, r3, r3 - 2, 135, 225, color, TFT_BLACK);
+    int radius = 15;
+    int teeth = 6;
+    int innerR = radius * 0.65;   // root circle (base of teeth)
+    int toothLen = radius * 0.35; // how far teeth stick out past innerR
+    int toothHalfW = radius * 0.22;
+    int holeR = radius * 0.3;     // center hole
+
+    // base disc
+    tft.fillCircle(x, y, innerR, color);
+
+    // teeth
+    for (int i = 0; i < teeth; i++) {
+        float angle = i * (360.0 / teeth) * DEG_TO_RAD;
+        float perp = angle + PI / 2;
+
+        float baseX = x + cos(angle) * innerR;
+        float baseY = y + sin(angle) * innerR;
+        float tipX  = x + cos(angle) * (innerR + toothLen);
+        float tipY  = y + sin(angle) * (innerR + toothLen);
+
+        float dx = cos(perp) * toothHalfW;
+        float dy = sin(perp) * toothHalfW;
+
+        int x1 = baseX + dx, y1 = baseY + dy;
+        int x2 = baseX - dx, y2 = baseY - dy;
+        int x3 = tipX + dx * 0.5f, y3 = tipY + dy * 0.5f;
+        int x4 = tipX - dx * 0.5f, y4 = tipY - dy * 0.5f;
+
+        tft.fillTriangle(x1, y1, x2, y2, x3, y3, color);
+        tft.fillTriangle(x2, y2, x3, y3, x4, y4, color);
+    }
+
+    // punch out center hole with background color
+    tft.fillCircle(x, y, holeR, TFT_BLACK);
+}
+void Display::drawBluetoothSymbol(int x, int y, uint16_t color, int size)
+{
+    int thickness = 2;
+    int h = size;         // half-height
+    int w = size * 0.7;   // apex horizontal offset from spine
+    int v = size * 0.42;  // apex vertical offset from center
+
+    int topX = x,     topY = y - h;
+    int botX = x,     botY = y + h;
+    int rUpX = x + w, rUpY = y - v;
+    int rDnX = x + w, rDnY = y + v;
+    int lUpX = x - w, lUpY = y - v;
+    int lDnX = x - w, lDnY = y + v;
+
+    tft.drawWideLine(topX, topY, botX, botY, thickness, color); // spine
+    tft.drawWideLine(topX, topY, rUpX, rUpY, thickness, color); // upper flag outer edge
+    tft.drawWideLine(botX, botY, rDnX, rDnY, thickness, color); // lower flag outer edge
+    tft.drawWideLine(rUpX, rUpY, lDnX, lDnY, thickness, color); // diagonal: upper-right -> lower-left
+    tft.drawWideLine(rDnX, rDnY, lUpX, lUpY, thickness, color); // diagonal: lower-right -> upper-left
 }
 
-void Display::drawWiFiSymbol(int x, int y, uint16_t color)
+void Display::drawWiFiSymbol(int x, int y, uint16_t full_color, uint16_t empty_color, int8_t signal_strength)
 {
-    int r1 = 8;
-    int r2 = 16;
-    int r3 = 24;
-    tft.fillCircle(x, y, 2, color);
-    tft.drawArc(x, y, r1, r1 - 2, 135, 225, color, TFT_BLACK);
-    tft.drawArc(x, y, r2, r2 - 2, 135, 225, color, TFT_BLACK);
-    tft.drawArc(x, y, r3, r3 - 2, 135, 225, color, TFT_BLACK);
+    if (signal_strength > 0) {
+        signal_strength = 0;
+    }
+    if (signal_strength < -100) {
+        signal_strength = -100;
+    }
+
+    int r1 = 6;
+    int r2 = 12;
+    int r3 = 18;
+
+    uint16_t color1 = signal_strength < 0 && signal_strength > -80 ? full_color : empty_color; // any usable signal
+    uint16_t color2 = signal_strength < 0 && signal_strength > -70 ? full_color : empty_color; // fair
+    uint16_t color3 = signal_strength < 0 && signal_strength > -67 ? full_color : empty_color; // good
+    uint16_t color4 = signal_strength < 0 && signal_strength > -55 ? full_color : empty_color; // excellent
+
+    tft.fillCircle(x, y, 2, color1);
+    tft.drawArc(x, y, r1, r1 - 2, 135, 225, color2, TFT_BLACK);
+    tft.drawArc(x, y, r2, r2 - 2, 135, 225, color3, TFT_BLACK);
+    tft.drawArc(x, y, r3, r3 - 2, 135, 225, color4, TFT_BLACK);
 }
 
 void Display::drawHomeSymbol(int x, int y, uint16_t color)
@@ -124,9 +184,9 @@ void Display::drawFitnessSymbol(int x, int y, uint16_t color)
 
 void Display::drawBatterySymbol(int x, int y, int battery, uint16_t color)
 {
-    int box_w = 50;
-    int box_h = 24;
-    int corner_r = 4;
+    int box_w = 25;
+    int box_h = 16;
+    int corner_r = 3;
     int terminal_w = 4;
     tft.drawRoundRect(x - box_w / 2, y - box_h / 2, box_w, box_h, corner_r, color);
     int term_x = x + box_w / 2;
@@ -141,8 +201,20 @@ void Display::drawBatterySymbol(int x, int y, int battery, uint16_t color)
     int fill_height = box_h - 2 * fill_margin;
     int fill_x = x - box_w / 2 + fill_margin;
     int fill_y = y - fill_height / 2;
-    tft.fillRect(fill_x, fill_y, fill_width, fill_height, TFT_GREEN);
-    String percent = String(battery) + "%";
+
+    color = battery > 15 ? TFT_GREEN : TFT_RED;
+    tft.fillRect(fill_x, fill_y, fill_width, fill_height, color);
+    
+
+    
+    char percent[4];
+    snprintf(percent, sizeof(percent), "%d%%", battery);
+
+    int text_w = strlen(percent) * 6;  // ~6px per char at size 1
+    int px = x - text_w / 2;
+    int py = y + box_h / 2 + 4;        // 4px gap below the box
+
+    print_d(percent, px, py, 1, TFT_WHITE);
 }
 
 void Display::drawTime(struct tm *timeInfo){
@@ -164,35 +236,42 @@ void Display::drawStepCount(uint32_t steps){
 
 
 void Display::drawRectangle(int x, int y, int width, int height, uint32_t color){
-    tft.drawRect(x,y,width,height,color);
+    tft.fillRect(x,y,width,height,color);
 }
 
 
 void Display::drawStopWatchStart(){
-    tft.fillScreen(TFT_BLACK);
+    clear_screen();
     drawHomeSymbol(HOME_X, HOME_Y);
     print_d("00:00:00", 20, 80, 4);
 
-    drawRectangle(50,120, 65, 20);
-    drawRectangle(140,120, 55, 20);
-    drawRectangle(100, 150, 65, 20);
+    drawRectangle(50,120, 65, 20, TFT_DARKGREY);
+    drawRectangle(140,120, 55, 20, TFT_DARKGREY);
+    drawRectangle(100, 150, 65, 20, TFT_DARKGREY);
 
-    print_d("Start", 53, 123);
-    print_d("Stop", 143, 123);
-    print_d("Reset", 103, 153);
+    print_d("Start", 53, 123, 2, TFT_GREEN, TFT_DARKGREY);
+    print_d("Stop", 143, 123, 2, TFT_GREEN, TFT_DARKGREY);
+    print_d("Reset", 103, 153, 2, TFT_GREEN, TFT_DARKGREY);
 }
 
 void Display::drawSettingsStart(){
-    tft.fillScreen(TFT_BLACK);
+    clear_screen();
     drawHomeSymbol(HOME_X, HOME_Y);
+
+    print_d("Wifi", 20, WIFI_Y);
+    print_d("Bluetooth", 20, BT_Y);
 }
 
 void Display::drawFitnessStart(){
-    tft.fillScreen(TFT_BLACK);
+    clear_screen();
     drawHomeSymbol(HOME_X, HOME_Y);
     print_d("Step Count", 30, 100, 3);
 }
 
 void Display::clear_screen(){
+    tft.fillRect(0,32,240,205, TFT_BLACK);
+}
+
+void Display::reset_screen(){
     tft.fillScreen(TFT_BLACK);
 }

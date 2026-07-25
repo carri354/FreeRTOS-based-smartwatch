@@ -23,6 +23,7 @@ class Power
    void power_off();
    void toggle_power();
    void reset_irq();
+   int get_battery_percentage();
 
    int power_display();
     private:

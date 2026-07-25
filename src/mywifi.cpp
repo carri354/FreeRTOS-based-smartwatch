@@ -10,7 +10,7 @@
     _identity = identity;
     _username = username;
     _password = password;
-
+    
     WiFi.disconnect(true, true);
     WiFi.mode(WIFI_STA);
 
@@ -101,6 +101,10 @@ status_t MyWifi::update() {
 
 void MyWifi::disconnect(){
     WiFi.disconnect(true);
+}
+
+int8_t MyWifi::get_rssi(){
+    return WiFi.RSSI();
 }
 
 const char* tzInfo = "EST5EDT,M3.2.0,M11.1.0";

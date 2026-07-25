@@ -28,6 +28,12 @@ Power::Power(){
 void Power::init(){
     power_on();
     axp.enableIRQ(AXP202_PEK_SHORTPRESS_IRQ | AXP202_PEK_LONGPRESS_IRQ, true);
+    // Enable battery voltage + current ADC so the fuel gauge has data to work with
+    axp.adc1Enable(AXP202_BATT_VOL_ADC1 | AXP202_BATT_CUR_ADC1, true);
+
+    // Make sure coulomb counter is running
+    axp.EnableCoulombcounter();
+
     reset_irq();
 }
 
@@ -77,4 +83,10 @@ void Power::power_off(){
 int Power::power_display(){
     axp.setPowerOutPut(AXP202_LDO2, true);
     return axp.isLDO2Enable();
+}
+
+
+int Power::get_battery_percentage(){
+    int percentage = axp.getBattPercentage();
+    return (percentage < 0) ? 0 : percentage; // fuel gauge not ready yet
 }

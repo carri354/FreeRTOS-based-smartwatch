@@ -1,6 +1,7 @@
 #include "app_handler.h"
 
 volatile bool app_should_exit = false;
+SemaphoreHandle_t lcd_mutex;
 
 
 void draw_app_icon(app_handle_t *app, int8_t idx){
@@ -9,13 +10,13 @@ void draw_app_icon(app_handle_t *app, int8_t idx){
     int8_t col = idx % 3;
     int8_t row = idx / 3;
 
-    (lcd.*(app->draw_icon))(HOME_HORZ_PAD + HOME_HORZ_SPACE*col, HOME_VERT_PAD + HOME_VERT_SPACE*row, TFT_GREEN);
+    if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+        (lcd.*(app->draw_icon))(HOME_HORZ_PAD + HOME_HORZ_SPACE*col, HOME_VERT_PAD + HOME_VERT_SPACE*row, TFT_GREEN);
+        xSemaphoreGive(lcd_mutex);
+    }
 }
 
-// Non-RTOS app launcher
-void launch_app(app_handle_t *app){
-    (*(app->launch))(NULL);
-}
+
 
 // RTOS-based app launcher
 void launch_app(app_handle_t *app, TaskHandle_t *h_task){
@@ -104,7 +105,11 @@ uint8_t stopwatch_detect_button(touch_point_t *p){
 void stopwatch_launch(void* param){
     touch_point_t point;
     Serial.println("Stopwatch launched!");
-    lcd.drawStopWatchStart();
+
+    if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+        lcd.drawStopWatchStart();
+        xSemaphoreGive(lcd_mutex);
+    }
 
     bool is_stopped = true;
     bool is_reset = true;
@@ -140,7 +145,10 @@ void stopwatch_launch(void* param){
                 case 2: // Reset
                     is_reset = true;
                     accumulated_sec = 0;
-                    lcd.print_d("00:00:00", 20, 80, 4);
+                    if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+                        lcd.print_d("00:00:00", 20, 80, 4);
+                        xSemaphoreGive(lcd_mutex);
+                    }
                 break;
                 default:
                 break;
@@ -156,7 +164,11 @@ void stopwatch_launch(void* param){
 
             char str[9];
             strftime(str, sizeof(str), "%H:%M:%S", &stoppage_time);
-            lcd.print_d(str, 20, 80, 4);
+
+            if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+                lcd.print_d(str, 20, 80, 4);
+                xSemaphoreGive(lcd_mutex);
+            }
         }
     }
 }
@@ -170,7 +182,12 @@ app_handle_t h_settings{
 };
 void settings_launch(void* param){
     Serial.println("Settings launched!");
-    lcd.drawSettingsStart();
+
+    if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+        lcd.drawSettingsStart();
+        xSemaphoreGive(lcd_mutex);
+    }
+
     while(1){
         if(app_should_exit){ vTaskDelete(NULL); }
         vTaskDelay(3000/portTICK_PERIOD_MS);
@@ -188,12 +205,21 @@ app_handle_t h_fitness{
 extern Accel accelerometer;
 void fitness_launch(void* param){
     Serial.println("Fitness launched!");
-    lcd.drawFitnessStart();
-    lcd.drawStepCount(accelerometer.get_step_count());
+
+    if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+        lcd.drawFitnessStart();
+        lcd.drawStepCount(accelerometer.get_step_count());
+        xSemaphoreGive(lcd_mutex);
+    }
+
     while(1){
         if(app_should_exit){ vTaskDelete(NULL); }
 
         vTaskDelay(300/portTICK_PERIOD_MS);
-        lcd.drawStepCount(accelerometer.get_step_count());
+
+        if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+            lcd.drawStepCount(accelerometer.get_step_count());
+            xSemaphoreGive(lcd_mutex);
+        }
     }
 }

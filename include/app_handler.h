@@ -40,6 +40,7 @@ bool ui_button_pressed(uint16_t x, uint16_t y);
 extern app_handle_t h_stopwatch;
 void stopwatch_launch(void *);
 
+
 extern app_handle_t h_settings;
 void settings_launch(void *);
 

@@ -22,6 +22,7 @@ public:
     bool isConnected();
     status_t update(); // call from main loop for reconnect handling
     void disconnect();
+    int8_t get_rssi();
 private:
 /**
  * TODO

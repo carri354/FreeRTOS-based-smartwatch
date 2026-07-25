@@ -7,6 +7,7 @@
 #include "accel.h"
 #include "dbg.h"
 #include "app_handler.h"
+#include "bluetooth.h"
 
 Power power_unit;
 Display lcd;
@@ -14,7 +15,7 @@ MyWifi wifi;
 struct tm timeInfo;
 touch_screen_t touch_screen;
 Accel accelerometer;
-
+Bluetooth BLE;
 
 int8_t app_idx = -1;
 int8_t last_app_idx = -1;
@@ -35,6 +36,8 @@ extern SemaphoreHandle_t touch_sem;
 extern SemaphoreHandle_t accel_sem;
 
 extern QueueHandle_t ui_button_q;
+
+extern SemaphoreHandle_t lcd_mutex;
 
 TaskHandle_t h_curr_task;
 
@@ -102,8 +105,25 @@ void handle_accelerometer(void *param){
 
 
 
+void update_status_bar(){
+  constexpr int BATTERY_X = 220;
+  constexpr int WIFI_X = 190;
+  constexpr int top_margin = 8;
+  constexpr int BT_X = 165;
+
+  int8_t signal_strength = wifi.get_rssi();
+
+  if(xSemaphoreTake(lcd_mutex, portMAX_DELAY) == pdTRUE){
+    lcd.drawBatterySymbol(BATTERY_X, top_margin, power_unit.get_battery_percentage(), TFT_GREEN);
+    lcd.drawWiFiSymbol(WIFI_X, top_margin + 13, TFT_GREEN, TFT_OLIVE, signal_strength);
+    lcd.drawBluetoothSymbol(BT_X, top_margin + 5, TFT_BLUE);
+    xSemaphoreGive(lcd_mutex);
+  }
+}
 
 void home_startup(){
+  
+  lcd.drawRectangle(0,0,240,32, TFT_DARKGREY);
   lcd.clear_screen();
   for(int i = 0; i < 9; i++){
     if(app_list[i]) draw_app_icon(app_list[i], i);
@@ -112,7 +132,7 @@ void home_startup(){
 
 void home_page(void *param){
   home_startup();
-
+  update_status_bar();
   while(1){
     bool on_home_screen = (app_idx == -1);
     bool app_idx_changed = (app_idx != last_app_idx);
@@ -139,6 +159,7 @@ void home_page(void *param){
       launch_app(app_list[app_idx], &h_curr_task);
     }
 
+    update_status_bar();
     vTaskDelay(200 / portTICK_PERIOD_MS);
   }
 }
@@ -158,6 +179,8 @@ void setup() {
   power_sem = xSemaphoreCreateBinary();
 
   ui_button_q = xQueueCreate(UI_BTN_QUEUE_LEN, sizeof(touch_point_t));
+
+  lcd_mutex = xSemaphoreCreateMutex();
   // Power Unit
   xTaskCreate(
     manage_power,
@@ -171,7 +194,7 @@ void setup() {
   // LCD
   lcd.init();
   
- 
+  
   // WiFi
   wifi.begin(id, user, pass);
 
@@ -187,7 +210,9 @@ void setup() {
     RTC_set_time(&timeInfo);
   }
 
+  
   wifi.disconnect();
+
   
   // Touch screen
   xTaskCreate(
@@ -209,6 +234,10 @@ void setup() {
     2,
     NULL
   );
+
+  // Bluetooth
+  BLE.init();
+  BLE.start_advertising();
   
   // App list
   app_list[0] = &h_stopwatch;
@@ -237,7 +266,7 @@ void setup() {
     NULL
   );
 
-
+  
 
   Serial.println("Setup Complete");
 

@@ -6,18 +6,21 @@
 constexpr uint8_t HOME_X = 190;
 constexpr uint8_t HOME_Y = 210;
 
+constexpr uint8_t WIFI_Y = 40;
+constexpr uint8_t BT_Y = 65;
 
 class Display
 {
 public:
-    void drawWiFiSymbol(int x, int y, uint16_t color = TFT_WHITE);
+    void drawWiFiSymbol(int x, int y, uint16_t full_color, uint16_t empty_color, int8_t signal_strength = -30);
     void drawHomeSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawRefreshSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawClockSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawFitnessSymbol(int x, int y, uint16_t color = TFT_WHITE);
     void drawBatterySymbol(int x, int y, int battery, uint16_t color = TFT_WHITE);
+    void drawBluetoothSymbol(int x, int y, uint16_t color, int size = 12);
 
-    void drawSettingsSymbol(int x, int y, uint16_t color = TFT_WHITE);
+    void drawSettingsSymbol(int x, int y, uint16_t color);
     void drawTime(struct tm *timeInfo);
     void drawDate(struct tm *timeInfo);
     void drawStepCount(uint32_t steps);
@@ -25,6 +28,7 @@ public:
     // Basic Shapes
     void drawRectangle(int x, int y, int width, int height, uint32_t color = TFT_WHITE);
     void clear_screen();
+    void reset_screen();
 
     // App Screens
     void drawStopWatchStart();
@@ -42,7 +46,7 @@ public:
      * WRITE YOUR PUBLIC MEMBERS AND FUNCTION HEADERS HERE
      */
     
-    void print_d(const char *str, int x, int y, uint8_t font_size = 2);
+    void print_d(const char *str, int x, int y, uint8_t font_size = 2, uint16_t fg_color = TFT_GREEN, uint16_t bg_color = TFT_BLACK);
 private:
     TFT_eSPI tft;
     /**
